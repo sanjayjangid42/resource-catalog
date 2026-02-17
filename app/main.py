@@ -1,18 +1,34 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-import secrets
+from contextlib import asynccontextmanager
+from app.api.resources import router
+from app.repositories.resource_repository import ResourceRepository
+from app.core.errors import AppException, app_exception_handler
+from app.core.request_id import request_id_middleware
 
-app = FastAPI(title="Resource Catalog")
+# Create a single repository instance
+repo = ResourceRepository()
 
-# Middleware for X-Request-Id
-@app.middleware("http")
-async def add_request_id(request: Request, call_next):
-    request_id = f"rcat-{secrets.token_hex(3)}"
-    response = await call_next(request)
-    response.headers["X-Request-Id"] = request_id
-    return response
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    #Seed 15 resources at startup
+    repo.seed()
+    yield
+
+
+app = FastAPI(lifespan=lifespan, title= "Resources Catalog MicroService")
+
+app.middleware("http")(request_id_middleware)
+app.add_exception_handler(AppException, app_exception_handler)
+
+app.include_router(router)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8080)
+
