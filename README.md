@@ -30,8 +30,9 @@ Supports CRUD operations, pagination, filtering, and includes a health endpoint.
 
 ## 1. Clone the repository
 
-git clone <your-repo-url>
-cd <repo-folder>
+git clone https://github.com/sanjayjangid42/resource-catalog.git
+
+cd resource-catalog
 
 
 # Local Setup (Using uv)
